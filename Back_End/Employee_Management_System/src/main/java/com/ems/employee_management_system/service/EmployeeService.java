@@ -3,7 +3,9 @@ package com.ems.employee_management_system.service;
 //Logic is written in service Implementation
 
 import com.ems.employee_management_system.dto.EmployeeUpdateRequest;
+import com.ems.employee_management_system.dto.EmployeeCreateRequest;
 import com.ems.employee_management_system.entity.Employee;
+import com.ems.employee_management_system.dto.EmployeeResponseDTO;
 //Importing employee Entity class for employee features
 
 import java.util.List;
@@ -24,16 +26,16 @@ public interface EmployeeService {
 //This Employee Service Interface contains only methods or features for Employee
 	
 	//--creating Method for Saving Employee
-	Employee createEmployee(Employee employee);//This returns  saved entity with generated Id
+	EmployeeResponseDTO createEmployee(EmployeeCreateRequest employee);//This returns  saved entity with generated Id
 	
 	//--Creating Method to Get Employee Id
-	Optional<Employee> getEmployeeById(long id);//Note: we should use only Long wrapper class to allow null
+	EmployeeResponseDTO getEmployeeById(long id);//Note: we should use only Long wrapper class to allow null
 	
 	//--creating Method to Get All Employees
-	List<Employee> getAllEmployees();
+	List<EmployeeResponseDTO> getAllEmployees();
 	
 	//--Creating Method to Update Employee
-	Employee updateEmployee(long id, Employee employee);
+	EmployeeResponseDTO updateEmployee(long id, EmployeeUpdateRequest employee);
 	
 	//--creating Method to Delete Employee By Id
 	void deleteEmployee(long id);

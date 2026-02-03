@@ -58,6 +58,18 @@
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!---MapStruct-->
+        <dependency>
+           <groupId>org.mapstruct</groupId>
+           <artifactId>mapstruct</artifactId>
+           <version>1.5.5.Final</version>
+        </dependency>
+        <dependency>
+           <groupId>org.mapstruct</groupId>
+           <artifactId>mapstruct-processor</artifactId>
+           <version>1.5.5.Final</version>
+           <scope>provided</scope>
+         </dependency>
 
         <!-- Testing -->
         <dependency>
@@ -78,6 +90,11 @@
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
+                        </path>
+                        <path>
+                           <groupId>org.mapstruct</groupId>
+                           <artifactId>mapstruct-processor</artifactId>
+                           <version>1.5.5.Final</version>
                         </path>
                     </annotationProcessorPaths>
                     <source>${java.version}</source>

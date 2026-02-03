@@ -2,7 +2,7 @@ package com.ems.employee_management_system.controller;
 
 //Import project packages
 import com.ems.employee_management_system.entity.Employee;//Import Employee Entity
-import com.ems.employee_management_system.exception.EmployeeNotFoundException;
+//import com.ems.employee_management_system.exception.EmployeeNotFoundException;
 import com.ems.employee_management_system.service.EmployeeService;//Import Employee Service interface
 
 //Java Utility
@@ -61,6 +61,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.ems.employee_management_system.dto.EmployeeCreateRequest;
 import com.ems.employee_management_system.dto.EmployeeResponseDTO;
 import com.ems.employee_management_system.dto.EmployeeMapper;
+import com.ems.employee_management_system.dto.EmployeeMapperInterface;
 import com.ems.employee_management_system.dto.EmployeeUpdateRequest;
 //import jakarta for validation
 import jakarta.validation.Valid;// @Valid triggers validation constraints , until that they can be normal variables with no validation
@@ -81,16 +82,19 @@ public class EmployeeController {
 	//but use @Component on EmployeeMapper class, spring automatically create objects and inject into controller
 	
 	private final EmployeeMapper mapper;
+	
+	private final EmployeeMapperInterface mapperInterface;
 	//Constructor Injection
-	public EmployeeController(EmployeeService employeeService,EmployeeMapper mapper) {
+	public EmployeeController(EmployeeService employeeService,EmployeeMapper mapper,EmployeeMapperInterface mapperInterface) {
 		this.employeeService = employeeService;
 		this.mapper = mapper;
+		this.mapperInterface = mapperInterface;
 		
 	}
 	
 	//Create Employee
 	@PostMapping
-	public ResponseEntity<Employee> createEmployee(@Valid @RequestBody EmployeeCreateRequest employee){
+	public ResponseEntity<EmployeeResponseDTO> createEmployee(@Valid @RequestBody EmployeeCreateRequest employee){
 		//@PostMapping--This method triggered only on Http Post request through this @RequestMapping("/api/employee") url
 		
 		//@RequestBody--this annotation tells spring to convert JSON employee  Object to Java Object
@@ -99,7 +103,7 @@ public class EmployeeController {
 		
 		//@Valid checks the given validation is satisfyed or not and if not , spring automatically throw a MethodArgumentNotValidException
 		
-		Employee savedEmployee = employeeService.createEmployee(mapper.toEmployeeEntity(employee));
+		EmployeeResponseDTO savedEmployee = employeeService.createEmployee(employee);
 		// createEmployee(employee) create Employee record in DB and return That Object
 		
 		return new ResponseEntity<>(savedEmployee,HttpStatus.CREATED);
@@ -111,16 +115,22 @@ public class EmployeeController {
 	
 //Get Employee By Id
 	@GetMapping("/{id}")
-	public ResponseEntity<Employee> getEmployeeById(@PathVariable long id) {
+	public ResponseEntity<EmployeeResponseDTO> getEmployeeById(@PathVariable long id) {
 		
-		Optional<Employee> existingEmployee = employeeService.getEmployeeById(id);
+		EmployeeResponseDTO existingEmployee =  employeeService.getEmployeeById(id);//Note if employee is not found, RuntimeException bubbles up and spring returns  500--Internal Server Error: but it's clients error should return : 404 NotFound
 		//alternative: return ResponseEntity.of(employeeService.getEmployeeById(id));   Returns 200 OK if present, 404 Not Found if empty — same behavior but less verbose.
-	return	existingEmployee.map( emp -> new ResponseEntity<>(emp,HttpStatus.OK)).orElseGet(()-> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+	
+		//return	new ResponseEntity<>(existingEmployee, HttpStatus.OK);
+		
+		//another alternative
+		//return ResponseEntity.of(employeeService.getEmployeeById(id)); this works when getEmployeeById(id) returns Optional<T> type and this generate optional.empty() : 404 Error and if Optiona.of(value)--200 OK
+		
+	return ResponseEntity.ok(existingEmployee);// return  ResponseEntity with HttpStatus.Ok
 	}
 //Get All Employees
 	@GetMapping
-	public ResponseEntity<List<Employee>> getEmployees(){
-		List<Employee> allExistingEmployees = employeeService.getAllEmployees();
+	public ResponseEntity<List<EmployeeResponseDTO>> getEmployees(){
+		List<EmployeeResponseDTO> allExistingEmployees = employeeService.getAllEmployees();
 		
 		return new ResponseEntity<>(allExistingEmployees,HttpStatus.OK);
 	}
@@ -130,7 +140,7 @@ public class EmployeeController {
 	@PutMapping("/{id}")
 	public ResponseEntity<EmployeeResponseDTO> updateEmployeeById(@PathVariable long id,@Valid @RequestBody EmployeeUpdateRequest employee){
 		//pass this RequestBody to Service
-		Employee existing = employeeService.getEmployeeById(id).orElseThrow(()->new EmployeeNotFoundException("Employee Not Found"));
+	//EmployeeResponseDTO existing  = employeeService.getEmployeeById(id);
         //The above line is enough, because this store the exising employee , if it's not there it return Runtime exception
 		//the below try-catch is useless Now but still can be used
 		//EmployeeNotFoundException is a custom exception class, with annotation: @ResponseStatus(HttpStatus.NOT_FOUND)--404 ERROR IF WE THROW THIS EXCEPTION
@@ -140,10 +150,10 @@ public class EmployeeController {
 		// return ResponseEntity.ok(UpdatedEmployee)
 		//if something else if failed unexpected error: ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 		
-		Employee updatedEmployee = employeeService.updateEmployee(id,mapper.toEmployeeEntity(existing, employee));
+		EmployeeResponseDTO updatedEmployee = employeeService.updateEmployee(id,employee);
 		//No need to use try-catch, because we alreayd checked  and employee is present and it's valid to update
 		
-		return new ResponseEntity<>(mapper.toEmployeeResponse(updatedEmployee),HttpStatus.OK);
+		return  ResponseEntity.ok(updatedEmployee);
 		
 	}
 	//Delete Employee by id
