@@ -1,6 +1,10 @@
 package com.ems.employee_management_system.service.impl;
 import com.ems.employee_management_system.dto.EmployeeUpdateRequest;
 import com.ems.employee_management_system.entity.Employee;//import Employee entity
+import com.ems.employee_management_system.exception.DepartmentNotFoundException;
+import com.ems.employee_management_system.exception.EmailNotFoundException;
+import com.ems.employee_management_system.exception.EmployeeNotFoundException;
+import com.ems.employee_management_system.exception.RoleNotFoundException;
 import com.ems.employee_management_system.repository.EmployeeRepository;//import EmployeeRepository
 import com.ems.employee_management_system.service.EmployeeService;
 
@@ -68,8 +72,9 @@ public EmployeeResponseDTO createEmployee(@Valid EmployeeCreateRequest createReq
 @Override
 public EmployeeResponseDTO getEmployeeById(long id){
    	return employeeRepository.findById(id)
-   			.map(mapper::toEmployeeResponse)
-   			.orElseThrow(()->new RuntimeException("Employee Not Found "));
+   			.map(mapper::toEmployeeResponse)//Employee Not Found Exception
+   			.orElseThrow(()->new EmployeeNotFoundException("Employee Not Found "));//We throw EmployeeNotFoundException custom class with ResposeStatus error 404: HttpStatus.NOT_FOUND
+   
    	//we are returning EmployeeResponseDTO object where we find EmployeeById that return Optional<Employee> using Employee Repository 
    	//so, using mapper we are returning EmployeeResponseDTO
    	//Note throwing RuntimeException is a bad practice use, Exception Handlers : EmployeeNotFoundException custom classes or other exceptions
@@ -112,7 +117,7 @@ public List<EmployeeResponseDTO> getAllEmployees(){
 @Override
 public EmployeeResponseDTO updateEmployee(long id,@Valid EmployeeUpdateRequest dtoRequest) {
 	 final Employee existingEmployee = employeeRepository.findById(id)
-			.orElseThrow(()-> new RuntimeException("ID not Found"+id));
+			.orElseThrow(()-> new EmployeeNotFoundException("ID not Found"+id));//EmployeeNotFoundException custom class with ResponseStatus 404 NOT_FOUND error
 	//employeeRepository.findById(id)--this returns Optional<Employee> optionalEmployeeObject
 	
 	// if employeeRepository.findById(id)-- if record found, then it returns Optional.of(employee)
@@ -178,19 +183,22 @@ public void deleteEmployee(long id) {
 	//alternative using Optional
 	
 	Employee existingEmployee = employeeRepository.findById(id).
-			orElseThrow(()->new RuntimeException("Id not found :"+id));
+			orElseThrow(()->new EmployeeNotFoundException("Id not found :"+id));
 	
 	employeeRepository.delete(existingEmployee);
 	
 }
 
+
+//need to create an EmailNotFoundException class
 @Override
 public void deleteEmployeeByEmail(String email) {
 	Employee existingEmployee = employeeRepository.findByEmail(email).
-			orElseThrow(()->new RuntimeException("Email not found"+email));
+			orElseThrow(()->new EmailNotFoundException("Email not found"+email));
 	employeeRepository.delete(existingEmployee);
 }
 
+//need to create DepartmentNotFoundException class
 @Override
 public void deleteEmployeeByDepartment(String department) {
 /*	if(employeeRepository.existsByDepartment(department)) {
@@ -203,7 +211,7 @@ public void deleteEmployeeByDepartment(String department) {
 	//Alternate and Effiecient way
 	long deleteCount = employeeRepository.deleteByDepartment(department);
 	if(deleteCount==0) {
-		throw new RuntimeException("Department Not found :"+department);
+		throw new DepartmentNotFoundException("Department Not found :"+department);
 	}
 }
 
@@ -211,13 +219,17 @@ public void deleteEmployeeByDepartment(String department) {
 public void deleteEmployeeByRole(String role) {
 	long deleteCount = employeeRepository.deleteByRole(role);
 	if(deleteCount ==0) {
-		throw new RuntimeException("Role Not found :"+role);
+		throw new RoleNotFoundException("Role Not found :"+role);
 	}
 };
 
 @Override
 public long countEmployeeByDepartment(String department) {
-	return employeeRepository.countByDepartment(department);
+	long count = employeeRepository.countByDepartment(department);
+	if(count==0) {
+		throw new DepartmentNotFoundException("Department Not Found");
+	}
+	return count;
 };
 
 public long deleteAllEmployees() {
